@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Location Tracker</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Bus Location Sharing</h1>
+    <p>Click the button below to share your location:</p>
+    <button id="start-sharing">Start Sharing Location</button>
+    <button id="stop-sharing" disabled>Stop Sharing Location</button>
+
+    <script>
+        const socket = io('https://busserver-1.onrender.com'); // Backend server address
+        let watchId = null;
+
+        const startSharingBtn = document.getElementById('start-sharing');
+        const stopSharingBtn = document.getElementById('stop-sharing');
+
+        startSharingBtn.addEventListener('click', () => {
+            if (navigator.geolocation) {
+                watchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        // Send location to the backend
+                        socket.emit('locationUpdate', {
+                            busId: 'Bus_001', // Replace with unique bus ID
+                            latitude,
+                            longitude,
+                        });
+                    },
+                    (error) => {
+                        alert('Error getting location: ' + error.message);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                    }
+                );
+                startSharingBtn.disabled = true;
+                stopSharingBtn.disabled = false;
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        });
+
+        stopSharingBtn.addEventListener('click', () => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            startSharingBtn.disabled = false;
+            stopSharingBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>
